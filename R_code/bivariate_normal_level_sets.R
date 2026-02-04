@@ -3,14 +3,13 @@ if (!require("mvtnorm")) install.packages("mvtnorm")
 library(mvtnorm)
 
 # Set up parameters
-mu    <- c(0, 0)
-sigma <- matrix(c(1, 0.5, 
-                  0.5, 1), nrow = 2)
+mu    <- c(2, 5)
+Sigma <- matrix(c(4, 2.5, 2.5, 3), nrow = 2)
 
 # Create grid and compute density
-x <- seq(-3, 3, length.out = 100)
-y <- seq(-3, 3, length.out = 100)
-z <- matrix(dmvnorm(expand.grid(x, y), mean = mu, sigma = sigma), nrow = 100)
+x <- seq(-4, 10, length.out = 100)
+y <- seq(-1, 12, length.out = 100)
+z <- matrix(dmvnorm(expand.grid(x, y), mean = mu, sigma = Sigma), nrow = 100)
 
 # Define the levels and a color palette
 n_levels <- 20
