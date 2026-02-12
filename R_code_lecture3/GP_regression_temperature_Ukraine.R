@@ -1,3 +1,5 @@
+# Note that this code may take a few minutes to render the figures
+
 # Load required libraries
 library(sf)
 library(giscoR)
@@ -16,8 +18,8 @@ station_data <- data.frame(
 X_obs <- as.matrix(station_data[, c("lng", "lat")])
 y_obs <- station_data$temp
 ell <- 2.0  # Length-scale
-sf2 <- 10.0 # prior variance
-sn2 <- 0.5  # Noise variance
+alphasq <- 10.0 # prior variance
+sigsq <- 0.5  # Noise variance
 
 # Create a dense grid of inputs for plotting
 grid_points <- expand.grid(
@@ -26,16 +28,16 @@ grid_points <- expand.grid(
 )
 X_star <- as.matrix(grid_points)
 
-# Square exponential covariance with prior variance sf2
-calc_cov <- function(x1, x2, l, sf2) {
+# Square exponential covariance with prior variance alphasq
+calc_cov <- function(x1, x2, l, alphasq) {
   dists <- as.matrix(dist(rbind(x1, x2)))
   dists <- dists[1:nrow(x1), (nrow(x1) + 1):ncol(dists)]
-  return(sf2 * exp(-0.5 * (dists^2) / l^2))
+  return(alphasq * exp(-0.5 * (dists^2) / l^2))
 }
 
 # Calculate posterior mean
-C_yy <- calc_cov(X_obs, X_obs, ell, sf2) + sn2 * diag(nrow(X_obs))
-C_star_obs <- calc_cov(X_star, X_obs, ell, sf2)
+C_yy <- calc_cov(X_obs, X_obs, ell, alphasq) + sigsq * diag(nrow(X_obs))
+C_star_obs <- calc_cov(X_star, X_obs, ell, alphasq)
 m0 <- 0
 post_mean <- m0 + C_star_obs %*% solve(C_yy, y_obs - m0)
 grid_points$predicted_temp <- as.numeric(post_mean)
@@ -64,7 +66,7 @@ ggplot() +
 
 # Compute prior variances first
 # We only need the diagonal for marginal variance to save memory
-C_star_star_diag <- rep(sf2, nrow(X_star)) 
+C_star_star_diag <- rep(alphasq, nrow(X_star)) 
 
 # Solve the linear system for the variance term: C_star_obs * inv(C_yy) * C_obs_star
 # We do this row by row (or via cross-products) to get the diagonal efficiently
