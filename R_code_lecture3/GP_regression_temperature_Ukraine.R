@@ -36,7 +36,7 @@ calc_cov <- function(x1, x2, l, sf2) {
 # Calculate posterior mean
 C_yy <- calc_cov(X_obs, X_obs, ell, sf2) + sn2 * diag(nrow(X_obs))
 C_star_obs <- calc_cov(X_star, X_obs, ell, sf2)
-m0 <- mean(y_obs)
+m0 <- 0
 post_mean <- m0 + C_star_obs %*% solve(C_yy, y_obs - m0)
 grid_points$predicted_temp <- as.numeric(post_mean)
 
