@@ -43,28 +43,35 @@ for (i in 1:4){
     lines(t_grid, mu_post, col = "darkblue", lwd = 2)             
     points(t_nodes, y_nodes, col = "red", pch = 19, cex = 1)
     
-    legend("topright", legend=c("g(t)", "posterior mean", "posterior variance"),
-           col=c("gray", "darkblue", rgb(0.1, 0.5, 0.8, 0.2)), lty=c(2, 1, 1), lwd=2)
+    # legend("topright", legend=c("g(t)", "posterior mean", "posterior variance"),
+    #        col=c("gray", "darkblue", rgb(0.1, 0.5, 0.8, 0.2)), lty=c(2, 1, 1), lwd=2)
     
     
-    # Compute the GP quadrature estimate of I
-    I <- sapply(t_nodes, function(ti) {
+    # Ingredients for the GP quadrature estimate of I
+    c_vec <- sapply(t_nodes, function(ti) {
       integrate(function(t) cov_sqexp(t, ti, l = l_param), lower = a, upper = b)$value
     })
-    
-    # Calculate GP quadrature weights: w = I^T * C^-1
-    weights <- t(I) %*% C_inv
+    # GP quadrature weights: w = c_vec^T * C^-1
+    weights <- t(c_vec) %*% C_inv
+    # Double integral of the covariance minus c_vec^T * C^-1 * c_vec
+    initial_variance <- integrate(function(t1) {
+      sapply(t1, function(t1_val) {
+        integrate(function(t2) cov_sqexp(t1_val, t2, l = l_param), a, b)$value
+      })
+    }, a, b)$value
     
     # Sum of (weights * observations)
     quad_estimate <- sum(weights * y_nodes)
+    quad_variance <- initial_variance - (t(c_vec) %*% C_inv %*% c_vec)
     
     # Add numerical results to the plot
     text_x <- a + 0.025
     text_y <- 1.4
     text(text_x, text_y, pos = 4, labels = paste0(
-      "GP Estimate: ", round(quad_estimate, 4), "\n",
-      "True Value:  ", round(true_val, 4), "\n",
-      "Abs Error:   ", round(abs(true_val - quad_estimate), 6)
+      "posterior mean of I: ", round(quad_estimate, 4), "\n",
+      "posterior var of I: ", round(quad_variance, 4), "\n",
+      "True Value:  ", round(true_val, 4) #, "\n",
+      #"Abs Error:   ", round(abs(true_val - quad_estimate), 6)
     ), cex = 0.8, font = 2)
 
     }    
